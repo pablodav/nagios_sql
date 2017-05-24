@@ -1,10 +1,51 @@
 Nagios sql
 ----------
 
+Install:
+========
+
+From pip::
+
+    pip3 install nagios_sql
+
+From pip with github::
+
+    pip3 install git+https://github.com/pablodav/nagios_sql.git
+
+For development::
+
+     # clone the repository
+     python3 setup.py develop
+
 Usage:
 ======
 
-Command line::
+Get help and options::
+
+    nagios_sql --help
+
+    usage: nagios_sql [-h] [-H HOST]
+                      [--test {db_state,logship_status,mirror_status,replication_status,sql_ping}]
+                      [-U USER] [-P PASSWORD] [-v [VERSION]]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -H HOST, --host HOST  SQL Backup HOST to connect
+      --test {db_state,logship_status,mirror_status,replication_status,sql_ping}, -t {db_state,logship_status,mirror_status,replication_status,sql_ping}
+                            tests:
+                              db_state
+                              logship_status
+                              mirror_status
+                              replication_status
+                              sql_ping
+      -U USER, --user USER  User to auth to DB
+      -P PASSWORD, --password PASSWORD
+                            Password to auth to DB
+      -v [VERSION], --version [VERSION]
+                            Gets version number
+
+
+Check replication_status::
 
     nagios_sql -H SERVERNAME -U 'USERNAME' -P 'PASSWORD' -t replication_status
 
