@@ -69,7 +69,7 @@ setup(name='nagios_sql',
           'Topic :: Database :: Database Engines/Servers',
           'Topic :: System :: Systems Administration'
       ],
-      url='https://github.com/pablodav',
+      url='https://github.com/pablodav/nagios_sql',
       author='Pablo Estigarribia',
       author_email='pablodav@gmail.com',
       license='MIT',
