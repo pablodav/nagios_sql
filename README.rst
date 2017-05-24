@@ -69,7 +69,7 @@ Configure you own `commands_nagios.cfg`::
     # standard way to define a command
     define command{
         command_name	check_nagios_sql
-        command_line	nagios_sql -H $HOSTADDRESS$ -U $ARG1$ -P $ARG2 -t $ARG3
+        command_line	nagios_sql -H $HOSTADDRESS$ -U $ARG1$ -P $ARG2$ -t $ARG3$
     }
 
     # this other custom settings will allow you to parse any argument
@@ -81,6 +81,24 @@ Configure you own `commands_nagios.cfg`::
     }
 
 Automatic provisioned with ansible by: https://github.com/CoffeeITWorks/ansible_nagios4_server_plugins
+
+Setup nagios service:
+=====================
+
+Example configure your service `sql_replicas.cfg`::
+
+    # Nagios checks for SQL replicas
+    # group defined on groups.cfg
+    # https://github.com/pablodav/nagios_sql
+
+    define service {
+        hostgroup_name                  sql_servers_replicas
+        service_description             sql_replicas_status
+        check_command                   check_nagios_sql!'username'!'password'!replication_status
+        notes                           some useful notes for your monitoring team
+        use                             generic-service
+    }
+
 
 Original author:
 ================
