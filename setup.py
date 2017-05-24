@@ -12,8 +12,11 @@ from setuptools import setup, find_packages
 import os
 from os import path
 import rstcheck
-from src.__init__ import __version__
 
+
+exec(open('src/version.py').read())
+
+# __version__ comes when execution src/version.py
 version = __version__
 
 here = path.abspath(path.dirname(__file__))
@@ -61,6 +64,10 @@ setup(name='nagios_sql',
           'License :: OSI Approved :: MIT License',
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3 :: Only',
+          'Programming Language :: SQL',
+          'Topic :: System :: Monitoring',
+          'Topic :: Database :: Database Engines/Servers',
+          'Topic :: System :: Systems Administration'
       ],
       url='https://github.com/pablodav',
       author='Pablo Estigarribia',

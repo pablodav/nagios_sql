@@ -61,6 +61,26 @@ Check replication_status::
     OK Sub:SERVERNAME DB:Test_DB1_Reporting Status:Idle Latency:0s
     OK Sub:SERVERNAME DB:Test_DB1_Reporting Status:Idle Latency:0s
 
+Setup nagios command:
+=====================
+
+Configure you own `commands_nagios.cfg`::
+
+    # standard way to define a command
+    define command{
+        command_name	check_nagios_sql
+        command_line	nagios_sql -H $HOSTADDRESS$ -U $ARG1$ -P $ARG2 -t $ARG3
+    }
+
+    # this other custom settings will allow you to parse any argument
+    # like:
+    # command  check_nagios_sql_custom!"-U 'USERNAME' -P 'PASSWORD' -t replication_status"
+    define command{
+        command_name	check_nagios_sql_custom
+        command_line	nagios_sql -H $HOSTADDRESS$ $ARG1$
+    }
+
+Automatic provisioned with ansible by: https://github.com/CoffeeITWorks/ansible_nagios4_server_plugins
 
 Original author:
 ================
