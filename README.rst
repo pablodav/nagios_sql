@@ -147,6 +147,14 @@ an missing publication that still appears in `distribution` database.
 
     exec sp_droppublication @publication = N'MyReplPub'
 
+In some strange case you could have orphaned publication in a database that has no publications, sql will give you error saying the database is not enabled for publications when running the above command. You could try to enable, run the above command and then disable. Use this command to enable with `true` and disable with `false`
+
+.. code-block:: sql
+
+    use master
+    exec sp_replicationdboption @dbname = N'databasename', @optname = N'publish', @value = N'true'
+    GO
+
 
 Nice references:
 ================
