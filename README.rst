@@ -162,3 +162,9 @@ Nice references:
 ================
 
 https://www.mssqltips.com/sqlservertip/2710/steps-to-clean-up-orphaned-replication-settings-in-sql-server/
+
+Other ways of deployment:
+=========================
+
+This plugin is already included in ansible role: https://github.com/CoffeeITWorks/ansible_nagios4_server_plugins 
+
