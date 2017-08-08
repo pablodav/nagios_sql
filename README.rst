@@ -4,6 +4,8 @@ Nagios sql
 Install:
 ========
 
+Requires python3, if you are on centos/redhat you can use: https://www.softwarecollections.org/en/ and install python3.
+
 From pip::
 
     pip3 install nagios_sql
