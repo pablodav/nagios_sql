@@ -359,7 +359,7 @@ def logship_status(host, user, password):
     return {'code': code, 'msg': msg}
 
 
-def main():
+    def main():
 
     options = parse_args(sys.argv[1:])
 
