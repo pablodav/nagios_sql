@@ -378,3 +378,41 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+@nagios_test
+def availavility_group_status(host, user, password):
+    """availavility group status"""
+    crit = warn = 0
+    msg = ''
+
+    sql = """SELECT ag.name agname, ags.* FROM sys.dm_hadr_availability_group_states ags INNER JOIN sys.availability_groups ag ON ag.group_id = ags.group_id"""
+    rows = execute_sql(host, sql, user=user, password=password)
+    if type(rows) is dict:
+        return rows
+
+    # state = {0:'Suspended', 1:'Disconnected', 2:'Synchronizing', 3:'PendingFailover', 4:'Synchronized'}
+    # sql = "EXEC sp_dbmmonitorresults '%s'" % dbname
+
+    for row in rows:
+        if row.get("synchronization_health") == 0:
+            crit += 1
+    #   if row.get("synchronization_health") == 3:
+    #       warn += 1
+
+        msg += "DB:%s Partner:%s State:%s\n" % (
+            row.get("agname"),
+            row.get("synchronization_health_desc"))
+
+    if crit > 0:
+        code = 'CRITICAL'
+        msg = 'Mirroring CRITICAL\n' + msg
+    elif warn > 0:
+        code = 'WARNING'
+        msg = 'Mirroring warning\n' + msg
+    else:
+        code = 'OK'
+        msg = 'Mirroring OK\n' + msg
+
+    return {'code': code, 'msg': msg}
+
