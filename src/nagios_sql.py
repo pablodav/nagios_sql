@@ -391,10 +391,10 @@ def availability_group_status(host, user, password):
     # state = {0:'Not healthy', 1:'Partially healthy', 2:'Healthy'}
 
     for row in rows:
-        if row.get("synchronization_health") < 2:
+        if row.get("synchronization_health") == 0:
             crit += 1
-    #   if row.get("synchronization_health") == 3:
-    #       warn += 1
+        if row.get("synchronization_health") == 1:
+            warn += 1
 
         msg += "DB:%s Partner:%s State:%s\n" % (
             row.get("agname"),
@@ -403,9 +403,9 @@ def availability_group_status(host, user, password):
     if crit > 0:
         code = 'CRITICAL'
         msg = 'Availability Group CRITICAL\n' + msg
-    #elif warn > 0:
-    #   code = 'WARNING'
-    #   msg = 'Availability Group warning\n' + msg
+    elif warn > 0:
+        code = 'WARNING'
+        msg = 'Availability Group warning\n' + msg
     else:
         code = 'OK'
         msg = 'Availability Group OK\n' + msg
