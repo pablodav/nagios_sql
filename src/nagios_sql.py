@@ -375,10 +375,6 @@ def main():
     result = func(host, user=user, password=password)
     nagios_return(result['code'], result['msg'])
 
-
-if __name__ == "__main__":
-    main()
-    
     
 @nagios_test
 def availavility_group_status(host, user, password):
@@ -416,3 +412,6 @@ def availavility_group_status(host, user, password):
 
     return {'code': code, 'msg': msg}
 
+if __name__ == "__main__":
+    main()
+    
