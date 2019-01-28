@@ -377,8 +377,8 @@ def main():
 
     
 @nagios_test
-def availavility_group_status(host, user, password):
-    """availavility group status"""
+def availability_group_status(host, user, password):
+    """availability group status"""
     crit = warn = 0
     msg = ''
 
@@ -402,13 +402,13 @@ def availavility_group_status(host, user, password):
 
     if crit > 0:
         code = 'CRITICAL'
-        msg = 'Availavility Group CRITICAL\n' + msg
+        msg = 'Availability Group CRITICAL\n' + msg
     #elif warn > 0:
     #   code = 'WARNING'
-    #   msg = 'Availavility Group warning\n' + msg
+    #   msg = 'Availability Group warning\n' + msg
     else:
         code = 'OK'
-        msg = 'Availavility Group OK\n' + msg
+        msg = 'Availability Group OK\n' + msg
 
     return {'code': code, 'msg': msg}
 
