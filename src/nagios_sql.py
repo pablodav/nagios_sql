@@ -390,12 +390,12 @@ def availavility_group_status(host, user, password):
     rows = execute_sql(host, sql, user=user, password=password)
     if type(rows) is dict:
         return rows
-
-    # state = {0:'Suspended', 1:'Disconnected', 2:'Synchronizing', 3:'PendingFailover', 4:'Synchronized'}
-    # sql = "EXEC sp_dbmmonitorresults '%s'" % dbname
+    
+    #https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-hadr-availability-replica-states-transact-sql?view=sql-server-2017
+    # state = {0:'Not healthy', 1:'Partially healthy', 2:'Healthy'}
 
     for row in rows:
-        if row.get("synchronization_health") == 0:
+        if row.get("synchronization_health") < 2:
             crit += 1
     #   if row.get("synchronization_health") == 3:
     #       warn += 1
@@ -406,13 +406,13 @@ def availavility_group_status(host, user, password):
 
     if crit > 0:
         code = 'CRITICAL'
-        msg = 'Mirroring CRITICAL\n' + msg
-    elif warn > 0:
-        code = 'WARNING'
-        msg = 'Mirroring warning\n' + msg
+        msg = 'Availavility Group CRITICAL\n' + msg
+    #elif warn > 0:
+    #   code = 'WARNING'
+    #   msg = 'Availavility Group warning\n' + msg
     else:
         code = 'OK'
-        msg = 'Mirroring OK\n' + msg
+        msg = 'Availavility Group OK\n' + msg
 
     return {'code': code, 'msg': msg}
 
