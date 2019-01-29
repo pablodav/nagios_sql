@@ -357,24 +357,6 @@ def logship_status(host, user, password):
         msg = 'Log shipping OK\n' + msg
 
     return {'code': code, 'msg': msg}
-
-
-    def main():
-
-    options = parse_args(sys.argv[1:])
-
-    if options.version:
-        raise SystemExit('{}'.format(__version__))
-
-    host = options.host
-    test = options.test
-    user = options.user
-    password = options.password
-
-    func = get_func(test)
-    result = func(host, user=user, password=password)
-    nagios_return(result['code'], result['msg'])
-
     
 @nagios_test
 def availability_group_status(host, user, password):
@@ -411,6 +393,25 @@ def availability_group_status(host, user, password):
         msg = 'Availability Group OK\n' + msg
 
     return {'code': code, 'msg': msg}
+
+
+
+def main():
+
+    options = parse_args(sys.argv[1:])
+
+    if options.version:
+        raise SystemExit('{}'.format(__version__))
+
+    host = options.host
+    test = options.test
+    user = options.user
+    password = options.password
+
+    func = get_func(test)
+    result = func(host, user=user, password=password)
+    nagios_return(result['code'], result['msg'])
+    
 
 if __name__ == "__main__":
     main()
