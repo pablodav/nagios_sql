@@ -38,6 +38,9 @@ def parse_args(args):
 
     parser.add_argument("-U", "--user", dest='user', help="User to auth to DB")
     parser.add_argument("-P", "--password", dest='password', help="Password to auth to DB")
+    parser.add_argument("-N", "--publisher_name", dest='publisher_name', 
+                        help='used to monitor replication_status in diffent publisher',
+                        default=None)
 
     parser.add_argument("-v", "--version", dest='version', nargs='?', default=None, const=True,
                         help="Gets version number")
@@ -188,7 +191,7 @@ def db_state(host, user, password):
 
 
 @nagios_test
-def replication_status(host, user, password):
+def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
     """Report transactional replication status"""
     mstat = mwarn = 0
     msg = ''
@@ -196,7 +199,7 @@ def replication_status(host, user, password):
     status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
     warning = {0: '', 1: '-Expiration ', 2: '-Latency '}
 
-    sql = 'EXEC dbo.sp_replmonitorhelppublication @publisher = @@SERVERNAME'
+    sql = 'EXEC dbo.sp_replmonitorhelppublication @publisher = {}'.format(publisher_name)
     rows = execute_sql(host, sql, 'distribution', user=user, password=password)
     if type(rows) is dict:
         return rows
@@ -378,8 +381,9 @@ def availability_group_status(host, user, password):
         if row.get("synchronization_health") == 1:
             warn += 1
 
-        msg += "DB:%s Partner:%s State:%s\n" % (
+        msg += "Group:{} Primary Replica:{} State:{}\n".format(
             row.get("agname"),
+            row.get("primary_replica"),
             row.get("synchronization_health_desc"))
 
     if crit > 0:
@@ -407,9 +411,14 @@ def main():
     test = options.test
     user = options.user
     password = options.password
+    publisher_name = options.publisher_name
 
     func = get_func(test)
-    result = func(host, user=user, password=password)
+    if publisher_name:
+        result = func(host, user=user, password=password, publisher_name=publisher_name)
+    else:
+        result = func(host, user=user, password=password)
+
     nagios_return(result['code'], result['msg'])
     
 
