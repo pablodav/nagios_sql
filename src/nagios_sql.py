@@ -398,6 +398,54 @@ def availability_group_status(host, user, password):
 
     return {'code': code, 'msg': msg}
 
+def synchronization_databases_ag(host, user, password):
+    """Databases Availability group Status"""
+   
+    msg = ''
+    primary = False    
+    synchronized = 'OK'
+
+    #status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
+    #warning = {0: '', 1: '-Expiration ', 2: '-Latency '}
+
+    sql = """select * FROM sys.dm_hadr_availability_group_states"""
+    rows = execute_sql(host, sql, user=user, password=password)
+
+    for row in rows:
+        if row.get("primary_replica") == '@@SERVERNAME':
+            primary = True
+    
+    sql = """SELECT db.name,repstat.synchronization_state_desc,repstat.synchronization_health_desc FROM sys.databases db INNER JOIN sys.dm_hadr_database_replica_states repstat ON db.database_id = repstat.database_id WHERE is_local = 1"""
+    rows = execute_sql(host, sql, user=user, password=password)
+
+    if type(rows) is dict:
+        return rows
+
+    if primary:
+
+        for row in rows:
+        
+            if row.get("synchronization_health_desc") != "SYNCHRONIZED":
+                synchronized = "CRITICAL"
+            
+            msg += "Name:{} State:{} Health:{}\n".format(
+                row.get("name"),
+                row.get("synchronization_state_desc"),
+                row.get("synchronization_health_desc"))
+
+    else:
+        
+        for row in rows:
+            
+            if row.get("synchronization_health_desc") != "SYNCHRONIZING":
+                synchronized = "CRITICAL"
+            
+            msg += "Name:{} State:{} Health:{}\n".format(
+                row.get("name"),
+                row.get("synchronization_state_desc"),
+                row.get("synchronization_health_desc")) 
+    
+    return {'code': synchronized, 'msg': msg}
 
 
 def main():
