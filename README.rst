@@ -27,19 +27,20 @@ Get help and options::
     nagios_sql --help
 
     usage: nagios_sql [-h] [-H HOST]
-                      [--test {db_state,logship_status,mirror_status,replication_status,sql_ping}]
+                      [--test {db_state,logship_status,mirror_status,replication_status,sql_ping,synchronization_databases_ag}]
                       [-U USER] [-P PASSWORD] [-v [VERSION]]
 
     optional arguments:
       -h, --help            show this help message and exit
       -H HOST, --host HOST  SQL Backup HOST to connect
-      --test {db_state,logship_status,mirror_status,replication_status,sql_ping}, -t {db_state,logship_status,mirror_status,replication_status,sql_ping}
+      --test {db_state,logship_status,mirror_status,replication_status,sql_ping,synchronization_databases_ag}, -t {db_state,logship_status,mirror_status,replication_status,sql_ping,synchronization_databases_ag}
                             tests:
                               db_state
                               logship_status
                               mirror_status
                               replication_status
                               sql_ping
+                              synchronization_databases_ag
       -U USER, --user USER  User to auth to DB
       -P PASSWORD, --password PASSWORD
                             Password to auth to DB
