@@ -398,6 +398,7 @@ def availability_group_status(host, user, password):
 
     return {'code': code, 'msg': msg}
 
+@nagios_test
 def synchronization_databases_ag(host, user, password):
     """Databases Availability group Status"""
    
