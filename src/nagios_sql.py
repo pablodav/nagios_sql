@@ -38,10 +38,11 @@ def parse_args(args):
 
     parser.add_argument("-U", "--user", dest='user', help="User to auth to DB")
     parser.add_argument("-P", "--password", dest='password', help="Password to auth to DB")
+    parser.add_argument("-S", "--server_primary", dest='server_primary', help="Password to auth to DB")
     parser.add_argument("-N", "--publisher_name", dest='publisher_name', 
                         help='used to monitor replication_status in diffent publisher',
                         default=None)
-
+	
     parser.add_argument("-v", "--version", dest='version', nargs='?', default=None, const=True,
                         help="Gets version number")
 
@@ -399,34 +400,34 @@ def availability_group_status(host, user, password):
     return {'code': code, 'msg': msg}
 
 @nagios_test
-def synchronization_databases_ag(host, user, password):
+def synchronization_databases_ag(host, user, password, server_primary):
     """Databases Availability group Status"""
-   
+	
     msg = ''
     primary = False    
     synchronized = 'OK'
-
+	
     #status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
     #warning = {0: '', 1: '-Expiration ', 2: '-Latency '}
 
     sql = """select * FROM sys.dm_hadr_availability_group_states"""
     rows = execute_sql(host, sql, user=user, password=password)
-
+	
     for row in rows:
-        if row.get("primary_replica") == '@@SERVERNAME':
+        if row.get("primary_replica") == server_primary:
             primary = True
-    
+
     sql = """SELECT db.name,repstat.synchronization_state_desc,repstat.synchronization_health_desc FROM sys.databases db INNER JOIN sys.dm_hadr_database_replica_states repstat ON db.database_id = repstat.database_id WHERE is_local = 1"""
     rows = execute_sql(host, sql, user=user, password=password)
 
     if type(rows) is dict:
         return rows
-
+	
     if primary:
 
         for row in rows:
         
-            if row.get("synchronization_health_desc") != "SYNCHRONIZED":
+            if row.get("synchronization_state_desc") != "SYNCHRONIZED":
                 synchronized = "CRITICAL"
             
             msg += "Name:{} State:{} Health:{}\n".format(
@@ -438,7 +439,7 @@ def synchronization_databases_ag(host, user, password):
         
         for row in rows:
             
-            if row.get("synchronization_health_desc") != "SYNCHRONIZING":
+            if row.get("synchronization_state_desc") != "SYNCHRONIZING":
                 synchronized = "CRITICAL"
             
             msg += "Name:{} State:{} Health:{}\n".format(
@@ -461,10 +462,13 @@ def main():
     user = options.user
     password = options.password
     publisher_name = options.publisher_name
+    server_primary = options.server_primary
 
     func = get_func(test)
     if publisher_name:
         result = func(host, user=user, password=password, publisher_name=publisher_name)
+    elif server_primary:
+        result = func(host, user=user, password=password, server_primary=server_primary)   
     else:
         result = func(host, user=user, password=password)
 
