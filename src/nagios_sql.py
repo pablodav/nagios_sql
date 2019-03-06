@@ -38,7 +38,7 @@ def parse_args(args):
 
     parser.add_argument("-U", "--user", dest='user', help="User to auth to DB")
     parser.add_argument("-P", "--password", dest='password', help="Password to auth to DB")
-    parser.add_argument("-S", "--server_primary", dest='server_primary', help="Password to auth to DB")
+    parser.add_argument("-S", "--server_primary", dest='server_primary', help="Specify primary availability group server")
     parser.add_argument("-N", "--publisher_name", dest='publisher_name', 
                         help='used to monitor replication_status in diffent publisher',
                         default=None)
@@ -404,7 +404,7 @@ def synchronization_databases_ag(host, user, password, server_primary):
     """Databases Availability group Status"""
 	
     msg = ''
-    primary = False    
+    primary = False
     synchronized = 'OK'
 	
     #status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
@@ -445,7 +445,7 @@ def synchronization_databases_ag(host, user, password, server_primary):
             msg += "Name:{} State:{} Health:{}\n".format(
                 row.get("name"),
                 row.get("synchronization_state_desc"),
-                row.get("synchronization_health_desc")) 
+                row.get("synchronization_health_desc"))
     
     return {'code': synchronized, 'msg': msg}
 
@@ -468,7 +468,7 @@ def main():
     if publisher_name:
         result = func(host, user=user, password=password, publisher_name=publisher_name)
     elif server_primary:
-        result = func(host, user=user, password=password, server_primary=server_primary)   
+        result = func(host, user=user, password=password, server_primary=server_primary)
     else:
         result = func(host, user=user, password=password)
 
