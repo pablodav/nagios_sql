@@ -447,6 +447,8 @@ def synchronization_databases_ag(host, user, password, server_primary):
                 row.get("synchronization_state_desc"),
                 row.get("synchronization_health_desc"))
     
+    msg = 'Database synchronization\n' + msg
+    	
     return {'code': synchronized, 'msg': msg}
 
 
