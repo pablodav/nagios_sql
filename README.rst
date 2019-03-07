@@ -28,19 +28,20 @@ Get help and options::
     nagios_sql --help
 
     usage: nagios_sql [-h] [-H HOST]
-                      [--test {db_state,logship_status,mirror_status,replication_status,sql_ping}]
+                      [--test {db_state,logship_status,mirror_status,replication_status,sql_ping,synchronization_databases_ag}]
                       [-U USER] [-P PASSWORD] [-v [VERSION]]
 
     optional arguments:
       -h, --help            show this help message and exit
       -H HOST, --host HOST  SQL Backup HOST to connect
-      --test {db_state,logship_status,mirror_status,replication_status,sql_ping}, -t {db_state,logship_status,mirror_status,replication_status,sql_ping}
+      --test {db_state,logship_status,mirror_status,replication_status,sql_ping,synchronization_databases_ag}, -t {db_state,logship_status,mirror_status,replication_status,sql_ping,synchronization_databases_ag}
                             tests:
                               db_state
                               logship_status
                               mirror_status
                               replication_status
                               sql_ping
+                              synchronization_databases_ag
       -U USER, --user USER  User to auth to DB
       -P PASSWORD, --password PASSWORD
                             Password to auth to DB
@@ -50,7 +51,7 @@ Get help and options::
 
 Check replication_status::
 
-    nagios_sql -H SERVERNAME -U 'USERNAME' -P 'PASSWORD' -t replication_status
+    nagios_sql -H SERVERNAME -U 'USERNAME' -P 'PASSWORD' -t replication_status -N 'publisher_name'
 
     CRITICAL: Replication CRITICAL
     OK Pub:Test_Replication1 DB:Test_DB1 Status:Idle MaxLatency:31s
@@ -63,6 +64,21 @@ Check replication_status::
     OK Sub:SERVERNAME DB:Test_DB1_Reporting Status:Idle Latency:0s
     OK Sub:SERVERNAME DB:Test_DB1_Reporting Status:Idle Latency:0s
     OK Sub:SERVERNAME DB:Test_DB1_Reporting Status:Idle Latency:0s
+	
+Check availability_group_status:
+
+    nagios_sql -H SERVERNAME -U 'USERNAME' -P 'PASSWORD' -t synchronization_databases_ag -N 'publisher_name'
+	
+	OK: Availability Group OK
+	Group:Server_AG Primary Replica:Server01 State:HEALTHY
+	
+Check synchronization_databases_ag:
+
+    nagios_sql -H SERVERNAME -U 'USERNAME' -P 'PASSWORD' -t synchronization_databases_ag -S 'server_primary'
+	
+	Ok: Name:Replication01 State:SYNCHRONIZING Health:HEALTHY
+	Name:Name:Replication02 State:SYNCHRONIZING Health:HEALTHY
+	Name:Name:Replication03 State:SYNCHRONIZING Health:HEALTHY
 
 Setup nagios command:
 =====================
