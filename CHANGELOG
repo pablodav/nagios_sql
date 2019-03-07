@@ -1,3 +1,5 @@
+0.8.0
+    * Added checks for synchronization database ag on clusters
 0.6.0
     * Added checks for availability group
     * fixes for replication_status with different publisher
