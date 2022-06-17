@@ -195,46 +195,67 @@ def db_state(host, user, password):
 def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
     """Report transactional replication status"""
     # 0 = error ('Unknown')
+    # mstat: status of check publication or subscription
+    # mwarn: warning status received from check of publication or subscription
+    # Default 0 for both
     mstat = mwarn = 0
     msg = ''
-    publication_status = 'OK'
+    status_critical_list = [5, 6]
+    status_ok_list = [1, 2, 3, 4]
 
     # Status dictionaries 
     status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
     warning = {0: '', 1: '-Expiration ', 2: '-Latency '}
 
-    # Transactional replication - publications
-    # Get data
-    sql = 'EXEC dbo.sp_replmonitorhelppublication @publisher = {}'.format(publisher_name)
-    rows = execute_sql(host, sql, 'distribution', user=user, password=password)
-    if type(rows) is dict:
-        return rows
+    def __get_publications_status():
+        """
+        Check if publication status is not critical and returns status number.
+        Check if publication warning is not critical and returns mwarn number.
+        Adds msg and publication status vars.
 
-    # Check publications
-    for row in rows:
+        return: mstat, mwarn, msg
+        """
+        _mstat = _mwarn = 0
+        _msg = ''
+        publication_status = 'OK'
 
-        if row.get("status") == 6 or row.get("status") == 5:
-            publication_status = "CRITICAL"
-            mstat = row["status"]
+        # Transactional replication - publications
+        # Get data
+        sql = 'EXEC dbo.sp_replmonitorhelppublication @publisher = {}'.format(publisher_name)
+        rows = execute_sql(host, sql, 'distribution', user=user, password=password)
+        if type(rows) is dict:
+            return rows
+
+        # Check publications
+        for row in rows:
+
+            if row.get("status") in status_critical_list:
+                publication_status = "CRITICAL"
+                _mstat = row["status"]
+                
+            elif row.get("warning") > 0:
+                publication_status = "WARNING"
+                _mwarn = row["warning"]
+
+            if row.get("worst_latency") is None:
+                row["worst_latency"] = 0
+
+            _msg += '%s Pub:%s DB:%s Status:%s%s MaxLatency:%ss\n' % (
+                publication_status,
+                row["publication"],
+                row["publisher_db"],
+                status.get(row["status"]),
+                warning.get(row["warning"]),
+                row["worst_latency"])
             
-        elif row.get("warning") > 0:
-            publication_status = "WARNING"
-            mwarn = row["warning"]
+            return _mstat, _mwarn, _msg, publication_status
 
-        if row.get("worst_latency") is None:
-            row["worst_latency"] = 0
-
-        msg += '%s Pub:%s DB:%s Status:%s%s MaxLatency:%ss\n' % (
-            publication_status,
-            row["publication"],
-            row["publisher_db"],
-            status.get(row["status"]),
-            warning.get(row["warning"]),
-            row["worst_latency"])
-
-    # Transactional replication - suscriptions    
-    if publication_status != 'CRITICAL':
-
+    def __get_subscription_status():
+        """
+        return: mstat, mwarn, msg
+        """
+        _mstat = _mwarn = 0
+        _msg = ''
         # Get data
         sql = 'EXEC dbo.sp_replmonitorhelpsubscription @publisher = @@SERVERNAME, @publication_type = 0'
         rows = execute_sql(host, sql, 'distribution', user=user, password=password)
@@ -242,37 +263,53 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
             return rows
 
         # Check suscriptions
+        # will set _mstat or _mwarn to CRITICAL or WARNING number value if any error found
         for row in rows:
 
             subscription_status = "OK"
 
-            if row.get("status") == 6 or row.get("status") == 5:
+            if row.get("status") in status_critical_list:
                 subscription_status = "CRITICAL"
-                mstat = row["status"]
-            elif row.get("warning") > 0 and  publication_status != 'WARNING':
+                _mstat = row["status"]
+            elif row.get("warning") > 0:
                 subscription_status = "WARNING"
-                mwarn = row["warning"]
+                _mwarn = row["warning"]
 
             if row.get("latency") is None:
                 row["latency"] = '?'
 
-            msg += '%s Sub:%s DB:%s Status:%s%s Latency:%ss\n' % (
+            _msg += '%s Sub:%s DB:%s Status:%s%s Latency:%ss\n' % (
                 subscription_status,
                 row.get("subscriber"),
                 row.get("subscriber_db"),
                 status.get(row["status"]),
                 warning.get(row["warning"]),
                 row.get("latency"))
+        
+        return _mstat, _mwarn, _msg
 
-    if mstat == 6 or mstat== 5:
+    # Check publications status
+    # change variables received from the check.
+    mstat, mwarn, msg = __get_publications_status()
+
+    # Transactional replication - suscriptions
+    # Do not check subscription_status if publication is CRITICAL.    
+    if mstat not in status_critical_list:
+        mstat, mwarn, _msg_subscription = __get_subscription_status()
+        msg += _msg_subscription
+
+    if mstat in status_critical_list:
         code = 'CRITICAL'
         msg = 'Replication CRITICAL\n' + msg
     elif mwarn > 0:
         code = 'WARNING'
         msg = 'Replication WARNING\n' + msg
-    else:
+    elif mstat in status_ok_list:
         code = 'OK'
         msg = 'Replication OK\n' + msg
+    else:
+        code = 'CRITICAL'
+        msg = 'Replication CRITICAL\n' + msg
 
     return {'code': code, 'msg': msg}
 
