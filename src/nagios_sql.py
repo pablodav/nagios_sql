@@ -201,7 +201,7 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
     mstat = mwarn = 0
     msg = ''
     status_critical_list = [5, 6]
-    status_ok_list = [1, 2, 3, 4]
+    status_ok_list = [0, 1, 2, 3, 4]
 
     # Status dictionaries 
     status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
@@ -217,7 +217,7 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
         """
         _mstat = _mwarn = 0
         _msg = ''
-        publication_status = 'OK'
+        
 
         # Transactional replication - publications
         # Get data
@@ -228,6 +228,8 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
 
         # Check publications
         for row in rows:
+
+            publication_status = 'OK'
 
             if row.get("status") in status_critical_list:
                 publication_status = "CRITICAL"
@@ -248,7 +250,7 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
                 warning.get(row["warning"]),
                 row["worst_latency"])
             
-            return _mstat, _mwarn, _msg, publication_status
+        return _mstat, _mwarn, _msg
 
     def __get_subscription_status():
         """
@@ -257,7 +259,7 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
         _mstat = _mwarn = 0
         _msg = ''
         # Get data
-        sql = 'EXEC dbo.sp_replmonitorhelpsubscription @publisher = @@SERVERNAME, @publication_type = 0'
+        sql = 'EXEC dbo.sp_replmonitorhelpsubscription @publisher = {}'.format(publisher_name) + ', @publication_type = 0'
         rows = execute_sql(host, sql, 'distribution', user=user, password=password)
         if type(rows) is dict:
             return rows
