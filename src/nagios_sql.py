@@ -194,80 +194,124 @@ def db_state(host, user, password):
 @nagios_test
 def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
     """Report transactional replication status"""
+    # 0 = error ('Unknown')
+    # mstat: status of check publication or subscription
+    # mwarn: warning status received from check of publication or subscription
+    # Default 0 for both
     mstat = mwarn = 0
     msg = ''
+    status_critical_list = [5, 6]
+    status_ok_list = [0, 1, 2, 3, 4]
 
+    # Status dictionaries 
     status = {0: 'Unknown', 1: 'Started', 2: 'Succeeded', 3: 'Active', 4: 'Idle', 5: 'Retrying', 6: 'Failed'}
     warning = {0: '', 1: '-Expiration ', 2: '-Latency '}
 
-    sql = 'EXEC dbo.sp_replmonitorhelppublication @publisher = {}'.format(publisher_name)
-    rows = execute_sql(host, sql, 'distribution', user=user, password=password)
-    if type(rows) is dict:
-        return rows
+    def __get_publications_status():
+        """
+        Check if publication status is not critical and returns status number.
+        Check if publication warning is not critical and returns mwarn number.
+        Adds msg and publication status vars.
 
-    for row in rows:
+        return: mstat, mwarn, msg
+        """
+        _mstat = _mwarn = 0
+        _msg = ''
+        
 
-        publication_status = "OK"
+        # Transactional replication - publications
+        # Get data
+        sql = 'EXEC dbo.sp_replmonitorhelppublication @publisher = {}'.format(publisher_name)
+        rows = execute_sql(host, sql, 'distribution', user=user, password=password)
+        if type(rows) is dict:
+            return rows
 
-        if row.get("status") == 6:
-            publication_status = "CRITICAL"
-        elif row.get("warning") > 0:
-            publication_status = "WARNING"
+        # Check publications
+        for row in rows:
 
-        if row.get("status") > mstat:
-            mstat = row["status"]
-        if row.get("warning") > mwarn:
-            mwarn = row["warning"]
-        if row.get("worst_latency") is None:
-            row["worst_latency"] = 0
+            publication_status = 'OK'
 
-        msg += '%s Pub:%s DB:%s Status:%s%s MaxLatency:%ss\n' % (
-            publication_status,
-            row["publication"],
-            row["publisher_db"],
-            status.get(row["status"]),
-            warning.get(row["warning"]),
-            row["worst_latency"])
+            if row.get("status") in status_critical_list:
+                publication_status = "CRITICAL"
+                _mstat = row["status"]
+                
+            elif row.get("warning") > 0:
+                publication_status = "WARNING"
+                _mwarn = row["warning"]
 
-    # Transactional replication
-    sql = 'EXEC dbo.sp_replmonitorhelpsubscription @publisher = @@SERVERNAME, @publication_type = 0'
-    rows = execute_sql(host, sql, 'distribution', user=user, password=password)
-    if type(rows) is dict:
-        return rows
+            if row.get("worst_latency") is None:
+                row["worst_latency"] = 0
 
-    for row in rows:
+            _msg += '%s Pub:%s DB:%s Status:%s%s MaxLatency:%ss\n' % (
+                publication_status,
+                row["publication"],
+                row["publisher_db"],
+                status.get(row["status"]),
+                warning.get(row["warning"]),
+                row["worst_latency"])
+            
+        return _mstat, _mwarn, _msg
 
-        subscription_status = "OK"
+    def __get_subscription_status():
+        """
+        return: mstat, mwarn, msg
+        """
+        _mstat = _mwarn = 0
+        _msg = ''
+        # Get data
+        sql = 'EXEC dbo.sp_replmonitorhelpsubscription @publisher = {}'.format(publisher_name) + ', @publication_type = 0'
+        rows = execute_sql(host, sql, 'distribution', user=user, password=password)
+        if type(rows) is dict:
+            return rows
 
-        if row.get("status") == 6:
-            subscription_status = "CRITICAL"
-        elif row.get("warning") > 0:
-            subscription_status = "WARNING"
+        # Check suscriptions
+        # will set _mstat or _mwarn to CRITICAL or WARNING number value if any error found
+        for row in rows:
 
-        if row.get("status") > mstat:
-            mstat = row["status"]
-        if row.get("warning") > mwarn:
-            mwarn = row["warning"]
-        if row.get("latency") is None:
-            row["latency"] = '?'
+            subscription_status = "OK"
 
-        msg += '%s Sub:%s DB:%s Status:%s%s Latency:%ss\n' % (
-            subscription_status,
-            row.get("subscriber"),
-            row.get("subscriber_db"),
-            status.get(row["status"]),
-            warning.get(row["warning"]),
-            row.get("latency"))
+            if row.get("status") in status_critical_list:
+                subscription_status = "CRITICAL"
+                _mstat = row["status"]
+            elif row.get("warning") > 0:
+                subscription_status = "WARNING"
+                _mwarn = row["warning"]
 
-    if mstat == 6:
+            if row.get("latency") is None:
+                row["latency"] = '?'
+
+            _msg += '%s Sub:%s DB:%s Status:%s%s Latency:%ss\n' % (
+                subscription_status,
+                row.get("subscriber"),
+                row.get("subscriber_db"),
+                status.get(row["status"]),
+                warning.get(row["warning"]),
+                row.get("latency"))
+        
+        return _mstat, _mwarn, _msg
+
+    # Check publications status
+    # change variables received from the check.
+    mstat, mwarn, msg = __get_publications_status()
+
+    # Transactional replication - suscriptions
+    # Do not check subscription_status if publication is CRITICAL.    
+    if mstat not in status_critical_list:
+        mstat, mwarn, _msg_subscription = __get_subscription_status()
+        msg += _msg_subscription
+
+    if mstat in status_critical_list:
         code = 'CRITICAL'
         msg = 'Replication CRITICAL\n' + msg
-    elif mstat == 5 or mwarn > 0:
+    elif mwarn > 0:
         code = 'WARNING'
         msg = 'Replication WARNING\n' + msg
-    else:
+    elif mstat in status_ok_list:
         code = 'OK'
         msg = 'Replication OK\n' + msg
+    else:
+        code = 'CRITICAL'
+        msg = 'Replication CRITICAL\n' + msg
 
     return {'code': code, 'msg': msg}
 
