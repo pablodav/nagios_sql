@@ -248,7 +248,7 @@ def replication_status(host, user, password, publisher_name='@@SERVERNAME'):
                 warning.get(row["warning"]),
                 row["worst_latency"])
             
-            return _mstat, _mwarn, _msg, publication_status
+            return _mstat, _mwarn, _msg
 
     def __get_subscription_status():
         """
