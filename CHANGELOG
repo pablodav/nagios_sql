@@ -1,3 +1,5 @@
+0.9.0
+    * Hotfix - Check publications and subscriptions
 0.8.1
     * workaround to allow dependency with pymssql
 0.8.0
